@@ -1,0 +1,15 @@
+**/.dockerignore
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/app.db
+**/rms.db
+**/AuditLogs
+**/logs
+**/TestResults
+README.md
+GEMINI.md
+MEMORY.md
