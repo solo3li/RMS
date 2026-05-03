@@ -490,12 +490,20 @@
         }
 
         function fetchEligibleBranch(addressId) {
+            if (!addressId) return;
             $.get('/CallCenter/GetEligibleBranch', { addressId: addressId })
                 .done(function(data) {
-                    $('#branchId').val(data.id);
+                    if (data && data.id) {
+                        $('#branchId').val(data.id);
+                    }
                 })
                 .fail(function(err) {
-                    alert('Logistics Warning: ' + (err.responseText || 'No open branch serves this zone.'));
+                    console.warn('Logistics Warning: ' + (err.responseText || 'No open branch serves this zone.'));
+                    
+                    // Show a non-blocking toast or text if Delivery is selected
+                    if ($('input[name="orderType"]:checked').val() == "0") {
+                        $('#deliveryFeeDisplay').html('<span class="text-danger small"><i class="fas fa-exclamation-triangle"></i> Zone unserviceable</span>');
+                    }
                 });
         }
 
