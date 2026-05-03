@@ -331,3 +331,4 @@ C:\Users\solo\Desktop\RMS\RMS.Web\obj\Debug\net10.0\RMS.Web.pdb
 C:\Users\solo\Desktop\RMS\RMS.Web\obj\Debug\net10.0\RMS.Web.genruntimeconfig.cache
 C:\Users\solo\Desktop\RMS\RMS.Web\obj\Debug\net10.0\ref\RMS.Web.dll
 C:\Users\solo\Desktop\RMS\RMS.Web\obj\Debug\net10.0\compressed\z79b9rw1en-{0}-0y7mmwkpvp-0y7mmwkpvp.gz
+C:\Users\solo\Desktop\RMS\RMS.Web\obj\Debug\net10.0\RMS.Web.sourcelink.json

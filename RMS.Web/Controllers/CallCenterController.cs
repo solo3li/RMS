@@ -37,12 +37,26 @@ namespace RMS.Web.Controllers
                 .Where(b => branchIds.Contains(b.ID))
                 .ToListAsync();
 
-            ViewBag.Categories = await _context.Categories
+            var categories = await _context.Categories
                 .Include(c => c.MenuItems)
                     .ThenInclude(m => m.Extras)
                 .Include(c => c.MenuItems)
                     .ThenInclude(m => m.Variants)
                 .ToListAsync();
+            
+            ViewBag.Categories = categories;
+
+            // Prepare Menu Items for JS to avoid Linq in Razor
+            var menuItemsList = categories.SelectMany(c => c.MenuItems).Select(m => new {
+                id = m.ID,
+                name = m.Name,
+                price = m.Price,
+                description = m.Description,
+                extras = m.Extras.Select(e => new { id = e.ID, name = e.Name, price = e.Price }).ToList(),
+                variants = m.Variants.Select(v => new { id = v.ID, name = v.Name, price = v.Price }).ToList()
+            }).ToList();
+
+            ViewBag.MenuItemsJson = System.Text.Json.JsonSerializer.Serialize(menuItemsList);
 
             var deliveryFeeSetting = await _context.SystemSettings.FirstOrDefaultAsync(s => s.Key == "DeliveryFee");
             ViewBag.DeliveryFee = deliveryFeeSetting?.Value ?? "5.00";

@@ -1,5 +1,9 @@
+@using RMS.Web.Models
+@using System.Linq
 @{
     ViewData["Title"] = "Call Center - New Order";
+    var categories = (List<Category>)ViewBag.Categories;
+    var branches = (List<Branch>)ViewBag.Branches;
 }
 
 <div class="row">
@@ -52,7 +56,7 @@
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Assign Branch</label>
                         <select id="branchId" class="form-select">
-                            @foreach (var branch in ViewBag.Branches)
+                            @foreach (var branch in branches)
                             {
                                 <option value="@branch.ID">@branch.Name</option>
                             }
@@ -120,9 +124,9 @@
             </div>
             <div class="card-body">
                 <ul class="nav nav-pills mb-4" id="categoryTabs" role="tablist">
-                    @for (int i = 0; i < ViewBag.Categories.Count; i++)
+                    @for (int i = 0; i < categories.Count; i++)
                     {
-                        var category = ViewBag.Categories[i];
+                        var category = categories[i];
                         <li class="nav-item" role="presentation">
                             <button class="nav-link @(i == 0 ? "active" : "")" 
                                     id="tab-@category.ID" data-bs-toggle="pill" 
@@ -133,13 +137,13 @@
                     }
                 </ul>
                 <div class="tab-content" id="menuContent">
-                    @for (int i = 0; i < ViewBag.Categories.Count; i++)
+                    @for (int i = 0; i < categories.Count; i++)
                     {
-                        var category = ViewBag.Categories[i];
+                        Category category = categories[i];
                         <div class="tab-pane fade @(i == 0 ? "show active" : "")" 
                              id="cat-@category.ID" role="tabpanel">
                             <div class="row row-cols-1 row-cols-md-3 g-3">
-                                @foreach (var item in category.MenuItems)
+                                @foreach (MenuItem item in category.MenuItems)
                                 {
                                     <div class="col menuItemCard" data-name="@item.Name.ToLower()">
                                         <div class="card h-100 border-0 bg-light">
@@ -148,11 +152,14 @@
                                                 <p class="small text-muted mb-2 text-truncate">@item.Description</p>
                                                 <div class="d-flex justify-content-between align-items-center mt-auto">
                                                     <span class="fw-bold text-primary">@item.Price.ToString("C")</span>
+                                                    @{
+                                                        bool hasOptions = item.Extras.Count > 0 || item.Variants.Count > 0;
+                                                    }
                                                     <button class="btn btn-sm btn-primary btn-add-item" 
                                                             data-id="@item.ID" 
                                                             data-name="@item.Name" 
                                                             data-price="@item.Price"
-                                                            data-has-options="@(item.Extras.Any() || item.Variants.Any() ? "true" : "false")">
+                                                            data-has-options="@(hasOptions ? "true" : "false")">
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
@@ -208,14 +215,7 @@
     <script>
         let cart = [];
         let currentCustomer = null;
-        let menuItems = @Html.Raw(Json.Serialize(((IEnumerable<dynamic>)ViewBag.Categories).SelectMany(c => (IEnumerable<dynamic>)c.MenuItems).Select(m => new {
-            id = m.ID,
-            name = m.Name,
-            price = m.Price,
-            description = m.Description,
-            extras = ((IEnumerable<dynamic>)m.Extras).Select(e => new { id = e.ID, name = e.Name, price = e.Price }),
-            variants = ((IEnumerable<dynamic>)m.Variants).Select(v => new { id = v.ID, name = v.Name, price = v.Price })
-        })));
+        let menuItems = @Html.Raw(ViewBag.MenuItemsJson);
         let currentEditingItem = null;
 
         $(document).ready(function() {
