@@ -26,7 +26,7 @@ namespace RMS.Web.Services
 
         public async Task<List<int>> GetUserBranchIdsAsync(ClaimsPrincipal user)
         {
-            if (user.IsInRole("Admin"))
+            if (user.IsInRole("Admin") || user.IsInRole("Call Center"))
             {
                 return await _context.Branches.Select(b => b.ID).ToListAsync();
             }
@@ -42,7 +42,7 @@ namespace RMS.Web.Services
 
         public async Task<bool> CanAccessBranchAsync(ClaimsPrincipal user, int branchId)
         {
-            if (user.IsInRole("Admin")) return true;
+            if (user.IsInRole("Admin") || user.IsInRole("Call Center")) return true;
 
             var branchIds = await GetUserBranchIdsAsync(user);
             return branchIds.Contains(branchId);
@@ -50,7 +50,7 @@ namespace RMS.Web.Services
 
         public async Task<IQueryable<Order>> FilterOrdersByBranchAsync(ClaimsPrincipal user, IQueryable<Order> query)
         {
-            if (user.IsInRole("Admin")) return query;
+            if (user.IsInRole("Admin") || user.IsInRole("Call Center")) return query;
 
             var branchIds = await GetUserBranchIdsAsync(user);
             return query.Where(o => branchIds.Contains(o.BranchId));

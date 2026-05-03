@@ -432,15 +432,17 @@
         });
 
         function handleCustomerFound(data) {
+            console.log("Customer found:", data);
             currentCustomer = data;
-            $('#custName').text(data.name);
-            $('#custPhone').text(data.phone);
+            $('#custName').text(data.name || data.Name);
+            $('#custPhone').text(data.phone || data.Phone);
             
             // Display Tags
             const tagsDiv = $('#custTags');
             tagsDiv.empty();
-            if (data.tags) {
-                const tags = data.tags.split(',');
+            const tagsValue = data.tags || data.Tags;
+            if (tagsValue) {
+                const tags = tagsValue.split(',');
                 tags.forEach(tag => {
                     let badgeClass = 'bg-secondary';
                     if (tag.toLowerCase().includes('vip')) badgeClass = 'bg-success';
@@ -448,18 +450,20 @@
                     tagsDiv.append(`<span class="badge ${badgeClass} ms-1">${tag.trim()}</span>`);
                 });
             }
+
             const addrSelect = $('#deliveryAddressId');
             addrSelect.empty();
-            if (data.addresses && data.addresses.length > 0) {
-                data.addresses.forEach(addr => {
-                    addrSelect.append(`<option value="${addr.id}">${addr.addressLine}</option>`);
+            const addresses = data.addresses || data.Addresses;
+            if (addresses && addresses.length > 0) {
+                addresses.forEach(addr => {
+                    addrSelect.append(`<option value="${addr.id || addr.ID}">${addr.addressLine || addr.AddressLine}</option>`);
                 });
-                fetchEligibleBranch(data.addresses[0].id);
+                fetchEligibleBranch(addresses[0].id || addresses[0].ID);
             } else {
                 addrSelect.append('<option value="">No addresses found</option>');
             }
 
-            loadCustomerHistory(data.id);
+            loadCustomerHistory(data.id || data.ID);
             $('#customerDetails').show();
             $('#noCustomer').hide();
             $('#registrationForm').hide();

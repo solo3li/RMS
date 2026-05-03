@@ -65,10 +65,22 @@ namespace RMS.Web.Data
             // 2. Seed Branches
             if (!context.Branches.Any())
             {
-                context.Branches.AddRange(
-                    new Branch { Name = "Main Branch", IsOpen = true, WorkingHours = "09:00 - 23:00", DeliveryZones = "Zone A, Zone B, Zone C" },
-                    new Branch { Name = "Downtown Express", IsOpen = true, WorkingHours = "10:00 - 22:00", DeliveryZones = "Zone D, Zone E" },
-                    new Branch { Name = "Westside Grill", IsOpen = true, WorkingHours = "11:00 - 00:00", DeliveryZones = "Zone F, Zone G" }
+                var branch1 = new Branch { Name = "Main Branch", IsOpen = true, WorkingHours = "09:00 - 23:00", DeliveryZones = "Zone A, Zone B, Zone C" };
+                var branch2 = new Branch { Name = "Downtown Express", IsOpen = true, WorkingHours = "10:00 - 22:00", DeliveryZones = "Zone D, Zone E" };
+                var branch3 = new Branch { Name = "Westside Grill", IsOpen = true, WorkingHours = "11:00 - 00:00", DeliveryZones = "Zone F, Zone G" };
+
+                context.Branches.AddRange(branch1, branch2, branch3);
+                await context.SaveChangesAsync();
+
+                // Seed Delivery Zones table for logistics engine
+                context.BranchDeliveryZones.AddRange(
+                    new BranchDeliveryZone { BranchId = branch1.ID, ZoneName = "Zone A", DeliveryFee = 5.00m },
+                    new BranchDeliveryZone { BranchId = branch1.ID, ZoneName = "Zone B", DeliveryFee = 6.00m },
+                    new BranchDeliveryZone { BranchId = branch1.ID, ZoneName = "Zone C", DeliveryFee = 7.00m },
+                    new BranchDeliveryZone { BranchId = branch2.ID, ZoneName = "Zone D", DeliveryFee = 4.00m },
+                    new BranchDeliveryZone { BranchId = branch2.ID, ZoneName = "Zone E", DeliveryFee = 5.50m },
+                    new BranchDeliveryZone { BranchId = branch3.ID, ZoneName = "Zone F", DeliveryFee = 8.00m },
+                    new BranchDeliveryZone { BranchId = branch3.ID, ZoneName = "Zone G", DeliveryFee = 9.00m }
                 );
                 await context.SaveChangesAsync();
             }

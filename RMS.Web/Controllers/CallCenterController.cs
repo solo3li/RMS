@@ -87,12 +87,12 @@ namespace RMS.Web.Controllers
                 .Where(b => b.IsOpen && b.BranchDeliveryZones.Any(z => z.ZoneName == address.Zone) && branchIds.Contains(b.ID))
                 .ToListAsync();
 
-            // Filter by working hours using helper
-            var eligibleBranch = branches.FirstOrDefault(b => BranchHelper.IsWithinWorkingHours(b.WorkingHours));
+            // Filter by working hours using helper, fallback to any available branch for the zone if all are closed
+            var eligibleBranch = branches.FirstOrDefault(b => BranchHelper.IsWithinWorkingHours(b.WorkingHours)) ?? branches.FirstOrDefault();
 
             if (eligibleBranch == null)
             {
-                return NotFound("No open branch found for this zone at the current time among your assigned branches.");
+                return NotFound("No open branch found for this zone among your assigned branches.");
             }
 
             return Json(new { id = eligibleBranch.ID, name = eligibleBranch.Name });
@@ -102,13 +102,34 @@ namespace RMS.Web.Controllers
         [Authorize(Policy = Permissions.Orders.Create)]
         public async Task<IActionResult> SearchCustomer(string phone)
         {
-            var customer = await _context.Customers
+            if (string.IsNullOrEmpty(phone)) return BadRequest();
+
+            // Normalize search input: remove non-digits
+            var searchPhone = new string(phone.Where(char.IsDigit).ToArray());
+
+            var customers = await _context.Customers
                 .Include(c => c.Addresses)
-                .FirstOrDefaultAsync(c => c.Phone == phone);
+                .ToListAsync();
+
+            // Support both exact match and partial normalized match (e.g., last 4 digits)
+            var customer = customers.FirstOrDefault(c => 
+                c.Phone == phone || 
+                (searchPhone.Length > 0 && new string(c.Phone.Where(char.IsDigit).ToArray()).Contains(searchPhone)));
             
             if (customer == null) return NotFound();
             
-            return Json(customer);
+            return Json(new {
+                id = customer.ID,
+                name = customer.Name,
+                phone = customer.Phone,
+                email = customer.Email,
+                tags = customer.Tags,
+                addresses = customer.Addresses.Select(a => new {
+                    id = a.ID,
+                    addressLine = a.AddressLine,
+                    zone = a.Zone
+                }).ToList()
+            });
         }
 
         [HttpGet]
@@ -168,8 +189,11 @@ namespace RMS.Web.Controllers
                 return BadRequest("Invalid customer data.");
             }
 
-            // Check if phone already exists
-            if (await _context.Customers.AnyAsync(c => c.Phone == request.Phone))
+            var normalizedRegPhone = new string(request.Phone.Where(char.IsDigit).ToArray());
+            var existingCustomers = await _context.Customers.ToListAsync();
+
+            // Check if phone already exists (exact match or normalized match)
+            if (existingCustomers.Any(c => c.Phone == request.Phone || new string(c.Phone.Where(char.IsDigit).ToArray()) == normalizedRegPhone))
             {
                 return BadRequest("A customer with this phone number already exists.");
             }
@@ -199,7 +223,20 @@ namespace RMS.Web.Controllers
                 .Include(c => c.Addresses)
                 .FirstOrDefaultAsync(c => c.ID == customer.ID);
 
-            return Json(result);
+            if (result == null) return NotFound();
+
+            return Json(new {
+                id = result.ID,
+                name = result.Name,
+                phone = result.Phone,
+                email = result.Email,
+                tags = result.Tags,
+                addresses = result.Addresses.Select(a => new {
+                    id = a.ID,
+                    addressLine = a.AddressLine,
+                    zone = a.Zone
+                }).ToList()
+            });
         }
 
         [HttpPost]
