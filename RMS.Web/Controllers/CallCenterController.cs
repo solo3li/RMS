@@ -46,6 +46,12 @@ namespace RMS.Web.Controllers
             
             ViewBag.Categories = categories;
 
+            // Fetch available zones for registration
+            ViewBag.Zones = await _context.BranchDeliveryZones
+                .Select(z => z.ZoneName)
+                .Distinct()
+                .ToListAsync();
+
             // Prepare Menu Items for JS to avoid Linq in Razor
             var menuItemsList = categories.SelectMany(c => c.MenuItems).Select(m => new {
                 id = m.ID,
@@ -154,6 +160,49 @@ namespace RMS.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = Permissions.Customers.Create)]
+        public async Task<IActionResult> RegisterCustomer([FromBody] CustomerRegistrationRequest request)
+        {
+            if (request == null || string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Phone))
+            {
+                return BadRequest("Invalid customer data.");
+            }
+
+            // Check if phone already exists
+            if (await _context.Customers.AnyAsync(c => c.Phone == request.Phone))
+            {
+                return BadRequest("A customer with this phone number already exists.");
+            }
+
+            var customer = new Customer
+            {
+                Name = request.Name,
+                Phone = request.Phone,
+                Email = request.Email,
+                Addresses = new List<CustomerAddress>()
+            };
+
+            if (!string.IsNullOrEmpty(request.AddressLine))
+            {
+                customer.Addresses.Add(new CustomerAddress
+                {
+                    AddressLine = request.AddressLine,
+                    Zone = request.Zone ?? ""
+                });
+            }
+
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+
+            // Return the created customer including the address
+            var result = await _context.Customers
+                .Include(c => c.Addresses)
+                .FirstOrDefaultAsync(c => c.ID == customer.ID);
+
+            return Json(result);
+        }
+
+        [HttpPost]
         [Authorize(Policy = Permissions.Orders.Create)]
         public async Task<IActionResult> CreateOrder([FromBody] OrderCreateRequest request)
         {
@@ -254,6 +303,15 @@ namespace RMS.Web.Controllers
 
             return Json(new { success = true, orderId = order.ID });
         }
+    }
+
+    public class CustomerRegistrationRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? AddressLine { get; set; }
+        public string? Zone { get; set; }
     }
 
     public class OrderCreateRequest

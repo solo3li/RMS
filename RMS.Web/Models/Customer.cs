@@ -14,6 +14,10 @@ namespace RMS.Web.Models
         [MaxLength(20)]
         public string Phone { get; set; } = string.Empty;
 
+        [EmailAddress]
+        [MaxLength(100)]
+        public string? Email { get; set; }
+
         public string? Notes { get; set; }
 
         public string? Tags { get; set; }

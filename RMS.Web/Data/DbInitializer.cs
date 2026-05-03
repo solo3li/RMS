@@ -10,7 +10,7 @@ namespace RMS.Web.Data
     {
         public static async Task Initialize(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
-            context.Database.EnsureCreated();
+            await context.Database.MigrateAsync();
 
             // 1. Seed Roles and Permissions
             string[] roles = { "Admin", "Branch Manager", "Call Center", "Kitchen", "Delivery" };
