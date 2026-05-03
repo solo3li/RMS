@@ -1,0 +1,60 @@
+@model RMS.Web.Models.RolePermissionsViewModel
+
+@{
+    ViewData["Title"] = $"Manage Permissions: {Model.RoleName}";
+    var groupedPermissions = Model.Permissions.GroupBy(p => p.Value.Split('.')[1]).ToList(); // e.g. Permissions.Orders.Create -> Orders
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted"><i class="fas fa-arrow-left me-2"></i>Back to Roles</a>
+        <h2 class="h3 mt-2 mb-0 text-gray-800"><i class="fas fa-key text-warning me-2"></i>Access Matrix: @Model.RoleName</h2>
+        <p class="text-muted">Configure the granular permissions available to this role.</p>
+    </div>
+
+    <form asp-action="EditPermissions" method="post">
+        <input type="hidden" asp-for="RoleId" />
+        <input type="hidden" asp-for="RoleName" />
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @for (int i = 0; i < groupedPermissions.Count; i++)
+            {
+                var group = groupedPermissions[i];
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-light py-3 border-0">
+                            <h6 class="m-0 font-weight-bold text-dark text-uppercase"><i class="fas fa-cube text-primary me-2"></i>@group.Key Module</h6>
+                        </div>
+                        <div class="card-body bg-white">
+                            @{
+                                var claimsInGroup = group.ToList();
+                            }
+                            @foreach (var claim in claimsInGroup)
+                            {
+                                var globalIndex = Model.Permissions.IndexOf(claim);
+                                <div class="form-check form-switch mb-2">
+                                    <input type="hidden" asp-for="Permissions[globalIndex].Type" />
+                                    <input type="hidden" asp-for="Permissions[globalIndex].Value" />
+                                    
+                                    <input class="form-check-input" type="checkbox" asp-for="Permissions[globalIndex].Selected" id="claim_@globalIndex">
+                                    <label class="form-check-label" for="claim_@globalIndex">
+                                        @claim.Value.Split('.').Last() <!-- Just show the action, e.g., 'Create' -->
+                                        <div class="small text-muted" style="font-size: 0.7rem;">@claim.Value</div>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-body bg-light text-end">
+                <button type="submit" class="btn btn-success fw-bold px-5 shadow-sm">
+                    <i class="fas fa-save me-2"></i>SAVE CONFIGURATION
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

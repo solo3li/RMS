@@ -1,35 +1,41 @@
-@using Microsoft.AspNetCore.Identity
-@model IEnumerable<IdentityRole>
+@model List<RMS.Web.Models.RoleViewModel>
 
 @{
-    ViewData["Title"] = "Role Management";
+    ViewData["Title"] = "Roles & Permissions Management";
 }
 
-<div class="container-fluid">
+<div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Role Management</h1>
+        <h2 class="h3 mb-0 text-gray-800"><i class="fas fa-user-lock text-primary me-2"></i>Roles Management</h2>
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+            <i class="fas fa-plus me-2"></i>Create New Role
+        </button>
     </div>
 
-    <div class="card shadow">
-        <div class="card-body">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted">
                         <tr>
-                            <th>Role Name</th>
-                            <th>ID</th>
-                            <th class="text-end">Actions</th>
+                            <th class="ps-4">Role Name</th>
+                            <th>Permissions Count</th>
+                            <th class="text-end pe-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var role in Model)
                         {
                             <tr>
-                                <td>@role.Name</td>
-                                <td>@role.Id</td>
-                                <td class="text-end">
-                                    <a asp-action="ManagePermissions" asp-route-roleId="@role.Id" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-shield-lock"></i> Manage Permissions
+                                <td class="ps-4 fw-bold text-dark">
+                                    <i class="fas fa-shield-alt text-secondary me-2"></i>@role.RoleName
+                                </td>
+                                <td>
+                                    <span class="badge bg-info rounded-pill">@role.PermissionCount Claims</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a asp-action="EditPermissions" asp-route-roleId="@role.RoleId" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-key me-1"></i> Manage Permissions
                                     </a>
                                 </td>
                             </tr>
@@ -37,6 +43,30 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form asp-action="CreateRole" method="post">
+                <div class="modal-header bg-light border-0">
+                    <h5 class="modal-title fw-bold" id="createRoleModalLabel">Create Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label fw-bold text-muted small text-uppercase">Role Name</label>
+                        <input type="text" class="form-control form-control-lg bg-light" id="roleName" name="roleName" required placeholder="e.g. Supervisor">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Create</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
