@@ -1,0 +1,138 @@
+@model RMS.Web.Models.MenuItem
+
+@{
+    ViewData["Title"] = "Manage Options";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Manage Options: @Model.Name</h1>
+    <p class="text-muted">Add or remove extras and variants for this menu item.</p>
+</div>
+
+<div class="row">
+    <!-- Extras Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Extras</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var extra in Model.Extras)
+                            {
+                                <tr>
+                                    <td>@extra.Name</td>
+                                    <td>@extra.Price.ToString("C")</td>
+                                    <td>
+                                        <form asp-action="DeleteExtra" asp-route-id="@extra.ID" method="post" onsubmit="return confirm('Are you sure you want to delete this extra?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Extras.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center">No extras defined.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr />
+                <h6>Add New Extra</h6>
+                <form asp-action="AddExtra" method="post">
+                    <input type="hidden" name="menuItemId" value="@Model.ID" />
+                    <div class="row g-2">
+                        <div class="col-sm-7">
+                            <input type="text" name="name" class="form-control" placeholder="Extra Name" required />
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="number" name="price" class="form-control" placeholder="Price" step="0.01" required />
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="submit" class="btn btn-primary w-100">Add</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variants Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Variants</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var variant in Model.Variants)
+                            {
+                                <tr>
+                                    <td>@variant.Name</td>
+                                    <td>@variant.Price.ToString("C")</td>
+                                    <td>
+                                        <form asp-action="DeleteVariant" asp-route-id="@variant.ID" method="post" onsubmit="return confirm('Are you sure you want to delete this variant?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Variants.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center">No variants defined.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr />
+                <h6>Add New Variant</h6>
+                <form asp-action="AddVariant" method="post">
+                    <input type="hidden" name="menuItemId" value="@Model.ID" />
+                    <div class="row g-2">
+                        <div class="col-sm-7">
+                            <input type="text" name="name" class="form-control" placeholder="Variant Name (e.g. Large)" required />
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="number" name="price" class="form-control" placeholder="Price" step="0.01" required />
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="submit" class="btn btn-primary w-100">Add</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="EditItem" asp-route-id="@Model.ID" class="btn btn-secondary">Back to Edit Item</a>
+</div>

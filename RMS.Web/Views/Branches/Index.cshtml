@@ -1,0 +1,69 @@
+@model IEnumerable<RMS.Web.Models.Branch>
+
+@{
+    ViewData["Title"] = "Branches";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Branches</h1>
+    <a asp-action="Create" class="btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Add New Branch
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">All Branches</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Working Hours</th>
+                        <th>Delivery Zones</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>
+                                @if (item.IsOpen)
+                                {
+                                    <span class="badge bg-soft-success">Open</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-soft-warning">Closed</span>
+                                }
+                            </td>
+                            <td>@item.WorkingHours</td>
+                            <td>@item.DeliveryZones</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="ManageMenu" asp-route-id="@item.ID" class="btn btn-sm btn-outline-success" title="Manage Menu">
+                                        <i class="fas fa-utensils"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.ID" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.ID" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.ID" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

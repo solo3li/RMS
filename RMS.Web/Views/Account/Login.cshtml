@@ -1,0 +1,96 @@
+@model RMS.Web.Controllers.LoginViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - RMS Enterprise</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/rms-theme.css" asp-append-version="true" />
+    <style>
+        body {
+            background-color: #f8f9fc;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 2rem 0 rgba(0, 0, 0, 0.1);
+        }
+        .login-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 1rem 1rem 0 0;
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card login-card">
+        <div class="login-header">
+            <h4 class="fw-bold mb-0 text-uppercase letter-spacing-1">RMS Enterprise</h4>
+            <div class="small opacity-75 mt-1">Management Portal</div>
+        </div>
+        <div class="card-body p-4 p-md-5">
+            @if (ViewData["Error"]?.ToString() == "AccountSuspended")
+            {
+                <div class="alert alert-danger small border-0 shadow-sm mb-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Your account has been suspended. Please contact your manager.
+                </div>
+            }
+
+            <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                        <input asp-for="Email" class="form-control border-start-0 ps-0" placeholder="admin@rms.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input asp-for="Password" class="form-control border-start-0 ps-0" type="password" placeholder="••••••••" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4 form-check">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label class="form-check-label small text-muted" asp-for="RememberMe">Keep me logged in</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold text-uppercase">
+                    Sign In <i class="fas fa-sign-in-alt ms-2"></i>
+                </button>
+            </form>
+        </div>
+        <div class="card-footer bg-light text-center py-3 border-0 rounded-bottom">
+            <div class="small text-muted">Authorized Personnel Only</div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

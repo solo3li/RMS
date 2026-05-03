@@ -1,0 +1,272 @@
+@model RMS.Web.Models.Order
+@{
+    ViewData["Title"] = "Edit Order Items #" + Model.ID;
+}
+
+<div class="row">
+    <!-- Left Column: Current Order Items -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-shopping-cart me-1"></i> Order #@Model.ID Items</h6>
+            </div>
+            <div class="card-body p-0">
+                <div id="cartItems" class="list-group list-group-flush" style="min-height: 100px;">
+                    <!-- Items will appear here -->
+                    <div class="text-center p-4 text-muted small" id="emptyCartMsg" style="display: none;">
+                        No items in the order.
+                    </div>
+                </div>
+                <div class="p-3 bg-light border-top">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Subtotal:</span>
+                        <span id="subtotalDisplay">$0.00</span>
+                    </div>
+                    @if (Model.OrderType == OrderType.Delivery)
+                    {
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Delivery Fee:</span>
+                            <span id="deliveryFeeDisplay">$@Model.DeliveryFee.ToString("F2")</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mb-1 text-danger">
+                        <span>Discount:</span>
+                        <span>-$@Model.DiscountAmount.ToString("F2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold text-primary fs-5 mt-2">
+                        <span>Total:</span>
+                        <span id="totalDisplay">$0.00</span>
+                    </div>
+                </div>
+                <div class="p-3">
+                    <button id="btnSaveOrder" class="btn btn-success w-100 py-2 fw-bold">
+                        SAVE CHANGES
+                    </button>
+                    <a asp-action="Details" asp-route-id="@Model.ID" class="btn btn-outline-secondary w-100 mt-2">CANCEL</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-info-circle me-1"></i> Order Info</h6>
+            </div>
+            <div class="card-body small">
+                <p class="mb-1"><strong>Customer:</strong> @Model.Customer.Name</p>
+                <p class="mb-1"><strong>Type:</strong> @Model.OrderType</p>
+                @if (Model.OrderType == OrderType.Delivery && Model.DeliveryAddress != null)
+                {
+                    <p class="mb-0"><strong>Address:</strong> @Model.DeliveryAddress.AddressLine</p>
+                    @if (!string.IsNullOrEmpty(Model.DeliveryAddress.Zone))
+                    {
+                        <p class="mb-0"><strong>Zone:</strong> @Model.DeliveryAddress.Zone</p>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Menu Selection -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Add More Items</h6>
+                <div class="input-group input-group-sm w-50">
+                    <input type="text" id="menuSearch" class="form-control" placeholder="Search menu..." />
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-pills mb-4" id="categoryTabs" role="tablist">
+                    @for (int i = 0; i < ViewBag.Categories.Count; i++)
+                    {
+                        var category = ViewBag.Categories[i];
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(i == 0 ? "active" : "")" 
+                                    id="tab-@category.ID" data-bs-toggle="pill" 
+                                    data-bs-target="#cat-@category.ID" type="button" role="tab">
+                                @category.Name
+                            </button>
+                        </li>
+                    }
+                </ul>
+                <div class="tab-content" id="menuContent">
+                    @for (int i = 0; i < ViewBag.Categories.Count; i++)
+                    {
+                        var category = ViewBag.Categories[i];
+                        <div class="tab-pane fade @(i == 0 ? "show active" : "")" 
+                             id="cat-@category.ID" role="tabpanel">
+                            <div class="row row-cols-1 row-cols-md-3 g-3">
+                                @foreach (var item in category.MenuItems)
+                                {
+                                    <div class="col menuItemCard" data-name="@item.Name.ToLower()">
+                                        <div class="card h-100 border-0 bg-light">
+                                            <div class="card-body d-flex flex-column">
+                                                <h6 class="fw-bold mb-1">@item.Name</h6>
+                                                <p class="small text-muted mb-2 text-truncate">@item.Description</p>
+                                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                                    <span class="fw-bold text-primary">@item.Price.ToString("C")</span>
+                                                    <button class="btn btn-sm btn-primary btn-add-item" 
+                                                            data-id="@item.ID" 
+                                                            data-name="@item.Name" 
+                                                            data-price="@item.Price">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let cart = [];
+        const orderId = @Model.ID;
+        const deliveryFee = @(Model.OrderType == OrderType.Delivery ? Model.DeliveryFee : 0);
+        const discountAmount = @Model.DiscountAmount;
+
+        // Initialize cart from existing items
+        @foreach (var item in Model.OrderItems)
+        {
+            <text>
+            cart.push({
+                menuItemId: @item.MenuItemId,
+                name: "@item.MenuItem.Name",
+                price: @item.UnitPrice,
+                quantity: @item.Quantity,
+                notes: "@item.Notes"
+            });
+            </text>
+        }
+
+        $(document).ready(function() {
+            renderCart();
+
+            // Add Item to Cart
+            $('.btn-add-item').click(function() {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+                const price = parseFloat($(this).data('price'));
+                addToCart(id, name, price, '');
+            });
+
+            // Menu Search
+            $('#menuSearch').on('keyup', function() {
+                const val = $(this).val().toLowerCase();
+                $('.menuItemCard').each(function() {
+                    $(this).toggle($(this).data('name').includes(val));
+                });
+            });
+
+            // Save Changes
+            $('#btnSaveOrder').click(function() {
+                if (cart.length === 0) {
+                    alert('Order must have at least one item.');
+                    return;
+                }
+
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> SAVING...');
+
+                $.ajax({
+                    url: '/Orders/EditItems/' + orderId,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(cart),
+                    success: function(response) {
+                        if (response.success) {
+                            window.location.href = '/Orders/Details/' + orderId;
+                        }
+                    },
+                    error: function(err) {
+                        alert('Error saving changes. Please try again.');
+                        $('#btnSaveOrder').prop('disabled', false).text('SAVE CHANGES');
+                    }
+                });
+            });
+        });
+
+        function addToCart(id, name, price, notes) {
+            const existing = cart.find(i => 
+                i.menuItemId === id && 
+                i.notes === notes && 
+                i.price === price
+            );
+
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({
+                    menuItemId: id,
+                    name: name,
+                    price: price,
+                    quantity: 1,
+                    notes: notes
+                });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = $('#cartItems');
+            $('#emptyCartMsg').toggle(cart.length === 0);
+            
+            container.find('.cart-item').remove();
+
+            cart.forEach((item, index) => {
+                let noteHtml = item.notes ? `<div class="text-info mt-1" style="font-size: 0.7rem;"><i class="fas fa-info-circle me-1"></i>${item.notes}</div>` : '';
+                container.append(`
+                    <div class="list-group-item cart-item px-3 py-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small">${item.name}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                                ${noteHtml}
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold me-2">$${(item.price * item.quantity).toFixed(2)}</span>
+                                <div class="btn-group btn-group-sm me-2">
+                                    <button class="btn btn-outline-secondary py-0" onclick="updateQuantity(${index}, -1)">-</button>
+                                    <button class="btn btn-outline-secondary py-0" onclick="updateQuantity(${index}, 1)">+</button>
+                                </div>
+                                <button class="btn btn-sm text-danger p-0" onclick="removeFromCart(${index})">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+
+            updateTotals();
+        }
+
+        function updateQuantity(index, delta) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1);
+            }
+            renderCart();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function updateTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal + deliveryFee - discountAmount;
+
+            $('#subtotalDisplay').text('$' + subtotal.toFixed(2));
+            $('#totalDisplay').text('$' + total.toFixed(2));
+        }
+    </script>
+}

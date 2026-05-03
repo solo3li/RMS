@@ -1,0 +1,152 @@
+@model IEnumerable<RMS.Web.Models.Order>
+
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Orders</h1>
+    <a asp-controller="CallCenter" asp-action="Index" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> New Order
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Live Order Monitor</h6>
+        <span class="badge bg-soft-info text-info" id="connection-status">
+            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i> Live
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="ordersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Type</th>
+                        <th>Customer</th>
+                        <th>Branch</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr id="order-row-@item.ID">
+                            <td>#@item.ID</td>
+                            <td>
+                                @if (item.OrderType == RMS.Web.Models.OrderType.Delivery)
+                                {
+                                    <span class="text-primary"><i class="fas fa-truck me-1"></i> Delivery</span>
+                                }
+                                else
+                                {
+                                    <span class="text-success"><i class="fas fa-walking me-1"></i> Pickup</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-bold">@item.Customer.Name</div>
+                                <div class="small text-muted">@item.Customer.Phone</div>
+                            </td>
+                            <td>@item.Branch.Name</td>
+                            <td>@item.TotalPrice.ToString("C")</td>
+                            <td>
+                                @{
+                                    var statusClass = item.Status switch
+                                    {
+                                        RMS.Web.Models.OrderStatus.Pending => "warning",
+                                        RMS.Web.Models.OrderStatus.Confirmed => "info",
+                                        RMS.Web.Models.OrderStatus.Preparing => "primary",
+                                        RMS.Web.Models.OrderStatus.Ready or RMS.Web.Models.OrderStatus.ReadyForPickup => "success",
+                                        RMS.Web.Models.OrderStatus.OutForDelivery => "info",
+                                        RMS.Web.Models.OrderStatus.Delivered or RMS.Web.Models.OrderStatus.PickedUp => "success",
+                                        RMS.Web.Models.OrderStatus.Cancelled => "danger",
+                                        _ => "secondary"
+                                    };
+                                }
+                                <span class="badge bg-@statusClass">@item.Status</span>
+                            </td>
+                            <td>@item.CreatedAt.ToLocalTime().ToString("MMM dd, HH:mm")</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.ID" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i> Details
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/orderHub")
+            .withAutomaticReconnect()
+            .build();
+
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show shadow-sm border-0 mb-2`;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-bell me-2"></i>
+                    <div>${message}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(toast);
+                bsAlert.close();
+            }, 10000);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.position = 'fixed';
+            container.style.top = '20px';
+            container.style.right = '20px';
+            container.style.zIndex = '1050';
+            container.style.width = '300px';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        connection.on("NewOrderReceived", function (orderId) {
+            showNotification(`New order <strong>#${orderId}</strong> received! <a href="/Orders/Details/${orderId}" class="alert-link">View Details</a>`, 'primary');
+            // Refresh table if on page
+            setTimeout(() => location.reload(), 3000);
+        });
+
+        connection.on("OrderStatusUpdated", function (orderId, status) {
+            showNotification(`Order <strong>#${orderId}</strong> status updated to <strong>${status}</strong>.`, 'success');
+            const row = document.getElementById("order-row-" + orderId);
+            if (row) {
+                setTimeout(() => location.reload(), 2000);
+            }
+        });
+
+        connection.start().then(function () {
+            console.log("SignalR Connected");
+            const statusBadge = document.getElementById("connection-status");
+            statusBadge.classList.replace("bg-soft-info", "bg-soft-success");
+            statusBadge.classList.replace("text-info", "text-success");
+        }).catch(function (err) {
+            console.error(err.toString());
+            const statusBadge = document.getElementById("connection-status");
+            statusBadge.classList.replace("bg-soft-info", "bg-soft-danger");
+            statusBadge.classList.replace("text-info", "text-danger");
+            statusBadge.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Offline';
+        });
+    </script>
+}

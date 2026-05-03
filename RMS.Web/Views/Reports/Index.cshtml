@@ -1,0 +1,430 @@
+@model RMS.Web.Models.ReportsViewModel
+
+@{
+    ViewData["Title"] = "Business Reports";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Business Reports</h1>
+        <div>
+            <a asp-action="ExportToCsv" class="btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-csv fa-sm text-white-50"></i> Export to CSV
+            </a>
+            <button onclick="window.print()" class="btn btn-sm btn-primary shadow-sm ms-2">
+                <i class="fas fa-download fa-sm text-white-50"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Total Revenue Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100 py-2 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalRevenue.ToString("C")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Orders Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100 py-2 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Orders</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalOrders</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Order Value Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100 py-2 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Avg Order Value</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.AverageOrderValue.ToString("C")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Daily Revenue Line Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Daily Revenue</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders by Type Pie Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Orders by Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2" style="height: 300px;">
+                        <canvas id="orderTypeChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        @foreach (var type in Model.OrderTypeBreakdowns)
+                        {
+                            <span class="mr-2">
+                                <i class="fas fa-circle" id="legend-@type.OrderType"></i> @type.OrderType
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Top Selling Items -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Selling Menu Items</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Menu Item</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.TopMenuItems)
+                                {
+                                    <tr>
+                                        <td>@item.MenuItemName</td>
+                                        <td class="text-center">@item.Quantity</td>
+                                        <td class="text-end">@item.Revenue.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Types -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Order Types Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th class="text-center">Orders</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var type in Model.OrderTypeBreakdowns)
+                                {
+                                    <tr>
+                                        <td>@type.OrderType</td>
+                                        <td class="text-center">@type.Count</td>
+                                        <td class="text-end">@type.Revenue.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Revenue per Branch -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue per Branch</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Branch Name</th>
+                                    <th class="text-center">Orders</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var branch in Model.BranchRevenues)
+                                {
+                                    <tr>
+                                        <td>@branch.BranchName</td>
+                                        <td class="text-center">@branch.OrderCount</td>
+                                        <td class="text-end">@branch.Revenue.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Performance -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Staff Performance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Staff Name</th>
+                                    <th class="text-center">Orders</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var staff in Model.StaffPerformances)
+                                {
+                                    <tr>
+                                        <td>@staff.StaffName</td>
+                                        <td class="text-center">@staff.TotalOrders</td>
+                                        <td class="text-end">@staff.TotalRevenue.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Staff Performance Chart -->
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Staff Revenue Generation</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar" style="height: 300px;">
+                        <canvas id="staffChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-start {
+        border-left: 0.25rem solid !important;
+    }
+    .text-xs {
+        font-size: .7rem;
+    }
+    .font-weight-bold {
+        font-weight: 700!important;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Set new default font family and font color to mimic Bootstrap's default styling
+        Chart.defaults.font.family = 'Inter', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+        Chart.defaults.color = '#858796';
+
+        // Daily Revenue Line Chart
+        var ctx = document.getElementById("revenueChart");
+        var myLineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.DailyRevenues.Select(x => x.Date.ToString("MMM dd")))),
+                datasets: [{
+                    label: "Revenue",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                    borderColor: "rgba(78, 115, 223, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: @Html.Raw(Json.Serialize(Model.DailyRevenues.Select(x => x.Revenue))),
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return '$' + value;
+                            }
+                        },
+                        grid: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Revenue: $' + context.parsed.y;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Orders by Type Pie Chart
+        var ctx2 = document.getElementById("orderTypeChart");
+        var myPieChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.OrderTypeBreakdowns.Select(x => x.OrderType.ToString()))),
+                datasets: [{
+                    data: @Html.Raw(Json.Serialize(Model.OrderTypeBreakdowns.Select(x => x.Count))),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                cutout: '80%',
+            },
+        });
+
+        // Staff Performance Bar Chart
+        var ctx3 = document.getElementById("staffChart");
+        var myBarChart = new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.StaffPerformances.Select(x => x.StaffName))),
+                datasets: [{
+                    label: "Revenue",
+                    backgroundColor: "#4e73df",
+                    hoverBackgroundColor: "#2e59d9",
+                    borderColor: "#4e73df",
+                    data: @Html.Raw(Json.Serialize(Model.StaffPerformances.Select(x => x.TotalRevenue))),
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return '$' + value;
+                            }
+                        },
+                        grid: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Revenue: $' + context.parsed.y;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Set colors in legend
+        const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'];
+        @for (int i = 0; i < Model.OrderTypeBreakdowns.Count; i++)
+        {
+            <text>
+            document.getElementById('legend-@Model.OrderTypeBreakdowns[i].OrderType').style.color = colors[@i % colors.Length];
+            </text>
+        }
+    </script>
+}

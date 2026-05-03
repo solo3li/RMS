@@ -1,0 +1,59 @@
+@model RMS.Web.Models.Branch
+
+@{
+    ViewData["Title"] = "Edit Branch";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Edit Branch: @Model.Name</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Branch Details</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="ID" />
+                    
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label font-weight-bold"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="IsOpen">
+                            <label class="form-check-label font-weight-bold" asp-for="IsOpen">Currently Open</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="WorkingHours" class="form-label font-weight-bold"></label>
+                        <textarea asp-for="WorkingHours" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="WorkingHours" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DeliveryZones" class="form-label font-weight-bold"></label>
+                        <textarea asp-for="DeliveryZones" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="DeliveryZones" class="text-danger"></span>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

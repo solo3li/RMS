@@ -1,0 +1,208 @@
+@using RMS.Web.Services
+@using RMS.Web.Constants
+@using Microsoft.AspNetCore.Authorization
+@inject ISettingsService SettingsService
+@inject IAuthorizationService AuthorizationService
+@{
+    var storeName = await SettingsService.GetSettingAsync("StoreName", "RMS");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @storeName</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    
+    <!-- Custom Theme -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rms-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/RMS.Web.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <i class="fas fa-utensils"></i> @storeName
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-controller="Home" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Branches.View)).Succeeded)
+                {
+                    <a asp-controller="Branches" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Branches" ? "active" : "")">
+                        <i class="fas fa-map-marker-alt"></i> Branches
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Menu.View)).Succeeded)
+                {
+                    <a asp-controller="Menu" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Menu" ? "active" : "")">
+                        <i class="fas fa-book-open"></i> Menu
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Customers.View)).Succeeded)
+                {
+                    <a asp-controller="Customers" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Customers" ? "active" : "")">
+                        <i class="fas fa-users"></i> Customers
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Orders.View)).Succeeded)
+                {
+                    <a asp-controller="Orders" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Orders" ? "active" : "")">
+                        <i class="fas fa-shopping-basket"></i> Orders
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Orders.Create)).Succeeded)
+                {
+                    <a asp-controller="CallCenter" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "CallCenter" ? "active" : "")">
+                        <i class="fas fa-headset"></i> Call Center
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Reports.View)).Succeeded)
+                {
+                    <a asp-controller="Reports" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
+                        <i class="fas fa-chart-line"></i> Reports
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.Users.View)).Succeeded)
+                {
+                    <a asp-controller="Users" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
+                        <i class="fas fa-user-shield"></i> Users
+                    </a>
+                }
+
+                @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.System.ViewAuditLogs)).Succeeded)
+                {
+                    <a asp-controller="Admin" asp-action="AuditLogs" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["Action"]?.ToString() == "AuditLogs" ? "active" : "")">
+                        <i class="fas fa-history"></i> Audit Logs
+                    </a>
+                }
+            </div>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <nav class="navbar navbar-expand-lg navbar-light top-navbar">
+                <div class="container-fluid">
+                    <button class="btn btn-link text-dark" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle fa-lg me-1"></i> Admin User
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i> Profile</a></li>
+                                <li><a class="dropdown-item" asp-controller="Settings" asp-action="Index"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i> Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <main class="main-content">
+                @RenderBody()
+            </main>
+            
+            <footer class="footer text-muted px-4 py-3">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6">
+                            &copy; 2026 - RMS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <!-- /#page-content-wrapper -->
+    </div>
+    <!-- /#wrapper -->
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="stockToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-primary text-white">
+                <i class="fas fa-box me-2"></i>
+                <strong class="me-auto">Stock Notification</strong>
+                <small>Just now</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" data-bs-toggle="toast"></button>
+            </div>
+            <div class="toast-body" id="stockToastBody">
+                Item status updated.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $("#menu-toggle").click(function(e) {
+            e.preventDefault();
+            $("#wrapper").toggleClass("toggled");
+        });
+
+        // Global SignalR listener for Stock Status
+        const globalConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/orderHub")
+            .withAutomaticReconnect()
+            .build();
+
+        globalConnection.on("StockStatusChanged", function (itemId, itemName, isAvailable, branchName) {
+            const toastElement = document.getElementById('stockToast');
+            const toastBody = document.getElementById('stockToastBody');
+            const status = isAvailable ? 
+                '<span class="text-success fw-bold">BACK IN STOCK</span>' : 
+                '<span class="text-danger fw-bold">OUT OF STOCK</span>';
+            
+            toastBody.innerHTML = `<strong>${itemName}</strong> is now ${status} in <strong>${branchName}</strong>.`;
+            
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+            
+            // If we are on the CallCenter page, we might want to refresh the menu or show a hint
+            if (window.location.pathname.includes("CallCenter")) {
+                // Optionally reload or update UI
+                console.log("Item status changed while in CallCenter");
+            }
+        });
+
+        globalConnection.start().catch(function (err) {
+            console.error("SignalR Global Connection Error: " + err.toString());
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

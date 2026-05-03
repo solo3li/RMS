@@ -1,0 +1,59 @@
+@model RMS.Web.Models.Customer
+
+@{
+    ViewData["Title"] = "Add Customer";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Add New Customer</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Customer Profile</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Name" class="form-label font-weight-bold"></label>
+                            <input asp-for="Name" class="form-control" placeholder="Full Name" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Phone" class="form-label font-weight-bold"></label>
+                            <input asp-for="Phone" class="form-control" placeholder="Phone Number" />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Tags" class="form-label font-weight-bold"></label>
+                        <input asp-for="Tags" class="form-control" placeholder="VIP, Regular, Corporate (comma separated)" />
+                        <span asp-validation-for="Tags" class="text-danger"></span>
+                        <small class="text-muted">Comma separated tags for easy filtering.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label font-weight-bold"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Preferences, allergies, special instructions..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Create Customer</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

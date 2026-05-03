@@ -1,0 +1,225 @@
+@model RMS.Web.Models.Order
+@inject RMS.Web.Services.ISettingsService Settings
+@{
+    Layout = null;
+    var storeName = await Settings.GetSettingAsync("StoreName") ?? "RMS RESTAURANT";
+    var currency = await Settings.GetSettingAsync("CurrencySymbol") ?? "$";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Receipt #@Model.ID</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            width: 80mm;
+            margin: 0;
+            padding: 10px;
+            color: #000;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+
+        .info-table {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .info-table td {
+            padding: 2px 0;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .items-table th {
+            text-align: left;
+            border-bottom: 1px dashed #000;
+            padding: 5px 0;
+        }
+
+        .items-table td {
+            padding: 5px 0;
+            vertical-align: top;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .totals {
+            margin-top: 10px;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .grand-total {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 5px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+        }
+
+        @@media print {
+            @@page {
+                margin: 0;
+            }
+            body {
+                margin: 0;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+
+        .no-print-btn {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <button class="no-print-btn no-print" onclick="window.print()">PRINT RECEIPT</button>
+
+    <div class="header">
+        <h1>@storeName</h1>
+        <p>Branch: @Model.Branch.Name</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <table class="info-table">
+        <tr>
+            <td><strong>Order #:</strong> @Model.ID</td>
+            <td class="text-right">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yy HH:mm")</td>
+        </tr>
+        <tr>
+            <td><strong>Type:</strong> @Model.OrderType</td>
+            <td class="text-right"><strong>Status:</strong> @Model.Status</td>
+        </tr>
+        <tr>
+            <td colspan="2"><strong>Customer:</strong> @Model.Customer.Name (@Model.Customer.Phone)</td>
+        </tr>
+        @if (Model.OrderType == OrderType.Delivery && Model.DeliveryAddress != null)
+        {
+            <tr>
+                <td colspan="2"><strong>Address:</strong> @Model.DeliveryAddress.AddressLine</td>
+            </tr>
+        }
+    </table>
+
+    <div class="divider"></div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>QTY</th>
+                <th>ITEM</th>
+                <th class="text-right">PRICE</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderItems)
+            {
+                <tr>
+                    <td>@item.Quantity</td>
+                    <td>@item.MenuItem.Name</td>
+                    <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("N2"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <div class="totals">
+        <div class="totals-row">
+            <span>Subtotal:</span>
+            <span>@currency @Model.OrderItems.Sum(i => i.UnitPrice * i.Quantity).ToString("N2")</span>
+        </div>
+        @if (Model.DeliveryFee > 0)
+        {
+            <div class="totals-row">
+                <span>Delivery Fee:</span>
+                <span>@currency @Model.DeliveryFee.ToString("N2")</span>
+            </div>
+        }
+        @if (Model.DiscountAmount > 0)
+        {
+            <div class="totals-row">
+                <span>Discount:</span>
+                <span>- @currency @Model.DiscountAmount.ToString("N2")</span>
+            </div>
+        }
+        <div class="totals-row grand-total">
+            <span>TOTAL:</span>
+            <span>@currency @Model.TotalPrice.ToString("N2")</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Notes))
+    {
+        <div class="divider"></div>
+        <div style="font-size: 12px;">
+            <strong>NOTES:</strong><br />
+            @Model.Notes
+        </div>
+    }
+
+    <div class="footer">
+        <p>Thank you for choosing @storeName!</p>
+        <p>Visit us again soon.</p>
+        <div class="divider" style="border-style: dotted;"></div>
+        <p>POS by RMS Enterprise</p>
+    </div>
+
+    <script>
+        // Auto-print if launched with print parameter
+        if (window.location.search.indexOf('print=true') > -1) {
+            window.print();
+        }
+    </script>
+</body>
+</html>

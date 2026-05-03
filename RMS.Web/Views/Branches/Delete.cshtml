@@ -1,0 +1,46 @@
+@model RMS.Web.Models.Branch
+
+@{
+    ViewData["Title"] = "Delete Branch";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Delete Branch</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Are you sure you want to delete this?</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4 font-weight-bold">Name</dt>
+                    <dd class="col-sm-8">@Model.Name</dd>
+                    
+                    <dt class="col-sm-4 font-weight-bold">Status</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.IsOpen)
+                        {
+                            <span class="badge bg-soft-success">Open</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-soft-warning">Closed</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 font-weight-bold">Working Hours</dt>
+                    <dd class="col-sm-8">@Model.WorkingHours</dd>
+                </dl>
+
+                <form asp-action="Delete" class="mt-4">
+                    <input type="hidden" asp-for="ID" />
+                    <button type="submit" class="btn btn-danger">Delete Branch</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

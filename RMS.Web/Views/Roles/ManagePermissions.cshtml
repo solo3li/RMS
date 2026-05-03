@@ -1,0 +1,64 @@
+@model RMS.Web.Models.PermissionViewModel
+
+@{
+    ViewData["Title"] = $"Manage Permissions - {Model.RoleName}";
+}
+
+<div class="container-fluid">
+    <form asp-action="ManagePermissions" method="post">
+        <input type="hidden" asp-for="RoleId" />
+        <input type="hidden" asp-for="RoleName" />
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Manage Permissions for <strong>@Model.RoleName</strong></h1>
+            <div>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Save Changes
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">All Permissions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @{
+                        // Group permissions by their namespace (e.g., Permissions.Orders)
+                        var groupedPermissions = Model.RoleClaims
+                            .GroupBy(c => c.Value.Split('.')[1])
+                            .OrderBy(g => g.Key);
+                    }
+
+                    @foreach (var group in groupedPermissions)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-light shadow-sm">
+                                <div class="card-header bg-primary text-white py-2">
+                                    <h6 class="mb-0">@group.Key</h6>
+                                </div>
+                                <div class="card-body">
+                                    @for (int i = 0; i < Model.RoleClaims.Count; i++)
+                                    {
+                                        if (Model.RoleClaims[i].Value.Split('.')[1] == group.Key)
+                                        {
+                                            <div class="form-check mb-2">
+                                                <input type="hidden" asp-for="@Model.RoleClaims[i].Value" />
+                                                <input asp-for="@Model.RoleClaims[i].Selected" class="form-check-input" />
+                                                <label class="form-check-label" asp-for="@Model.RoleClaims[i].Selected">
+                                                    @Model.RoleClaims[i].Value.Split('.').Last()
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

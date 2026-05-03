@@ -1,0 +1,107 @@
+@model IEnumerable<RMS.Web.Models.AuditLog>
+
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Audit Logs</h1>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">System Operation History</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Entity ID</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="small">@item.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</td>
+                            <td>
+                                <div class="fw-bold small">@(item.User?.UserName ?? "System")</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">@item.UserId</div>
+                            </td>
+                            <td>
+                                @{
+                                    var actionClass = item.Action switch
+                                    {
+                                        "Create" => "success",
+                                        "Update" => "warning",
+                                        "Delete" => "danger",
+                                        _ => "secondary"
+                                    };
+                                }
+                                <span class="badge bg-soft-@actionClass text-@actionClass border border-@actionClass">@item.Action</span>
+                            </td>
+                            <td><span class="text-uppercase small fw-bold text-muted">@item.EntityType</span></td>
+                            <td><code>@item.EntityId</code></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        onclick="showAuditDetail('@item.ID')"
+                                        data-bs-toggle="modal" data-bs-target="#auditModal">
+                                    <i class="fas fa-search-plus"></i> View Changes
+                                </button>
+                                <input type="hidden" id="before-@item.ID" value="@item.BeforeValue" />
+                                <input type="hidden" id="after-@item.ID" value="@item.AfterValue" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Audit Detail Modal -->
+<div class="modal fade" id="auditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Change Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-muted uppercase small mb-2">Before</h6>
+                        <pre id="auditBefore" class="p-3 bg-light rounded small" style="max-height: 400px; overflow-auto;"></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-muted uppercase small mb-2">After</h6>
+                        <pre id="auditAfter" class="p-3 bg-light rounded small" style="max-height: 400px; overflow-auto;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAuditDetail(id) {
+            try {
+                const before = document.getElementById('before-' + id).value;
+                const after = document.getElementById('after-' + id).value;
+                
+                document.getElementById('auditBefore').textContent = before ? JSON.stringify(JSON.parse(before), null, 2) : "None (New Entity)";
+                document.getElementById('auditAfter').textContent = after ? JSON.stringify(JSON.parse(after), null, 2) : "None (Deleted Entity)";
+            } catch (e) {
+                document.getElementById('auditBefore').textContent = "Error parsing data";
+                document.getElementById('auditAfter').textContent = "Error parsing data";
+            }
+        }
+    </script>
+}

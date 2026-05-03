@@ -1,0 +1,54 @@
+@model RMS.Web.Models.Branch
+
+@{
+    ViewData["Title"] = "Branch Details";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Branch Details: @Model.Name</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Overview</h6>
+                <div>
+                    <a asp-action="ManageMenu" asp-route-id="@Model.ID" class="btn btn-sm btn-success me-2">
+                        <i class="fas fa-utensils fa-sm"></i> Manage Menu
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit fa-sm"></i> Edit Branch
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-sm-4 text-muted font-weight-bold">Status</div>
+                    <div class="col-sm-8">
+                        @if (Model.IsOpen)
+                        {
+                            <span class="badge bg-soft-success">Open</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-soft-warning">Closed</span>
+                        }
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-sm-4 text-muted font-weight-bold">Working Hours</div>
+                    <div class="col-sm-8">@Model.WorkingHours</div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-sm-4 text-muted font-weight-bold">Delivery Zones</div>
+                    <div class="col-sm-8">@Model.DeliveryZones</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>

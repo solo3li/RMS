@@ -1,0 +1,144 @@
+@using RMS.Web.Models
+@model IEnumerable<RMS.Web.Models.Order>
+@{
+    ViewData["Title"] = "Delivery Dashboard";
+}
+
+<div class="delivery-dashboard container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold"><i class="fas fa-motorcycle me-2 text-primary"></i>DELIVERY DASHBOARD</h1>
+        <div class="text-end">
+            <span class="badge bg-dark fs-5 p-2">DRIVER: @User.Identity?.Name</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var order in Model)
+        {
+            <div class="col-12">
+                <div class="card shadow-lg @(order.Status == OrderStatus.Ready ? "border-success border-4" : "border-primary border-4")">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-lg-2 text-center mb-3 mb-lg-0">
+                                <div class="display-4 fw-bold text-primary">#@order.ID</div>
+                                <div class="mt-2">
+                                    @if (order.Status == OrderStatus.Ready)
+                                    {
+                                        <span class="badge bg-success fs-5 w-100">READY</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary fs-5 w-100">ON THE WAY</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3 mb-lg-0">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h2 class="mb-0 fw-bold">@order.Customer.Name</h2>
+                                    <a href="tel:@order.Customer.Phone" class="btn btn-outline-dark ms-3 btn-lg">
+                                        <i class="fas fa-phone me-1"></i> @order.Customer.Phone
+                                    </a>
+                                </div>
+                                
+                                @if (order.DeliveryAddress != null)
+                                {
+                                    <div class="bg-light p-3 border rounded-3 border-2">
+                                        <div class="d-flex justify-content-between">
+                                            <h4 class="fw-bold mb-3"><i class="fas fa-map-marker-alt me-2 text-danger"></i>DELIVERY ADDRESS</h4>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString(order.DeliveryAddress.AddressLine)" target="_blank" class="btn btn-sm btn-info text-white">
+                                                <i class="fas fa-directions me-1"></i> MAP
+                                            </a>
+                                        </div>
+                                        <p class="fs-3 mb-1 fw-bold">
+                                            @order.DeliveryAddress.AddressLine
+                                        </p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(order.Notes))
+                                {
+                                    <div class="mt-3 text-danger fw-bold fs-5">
+                                        <i class="fas fa-sticky-note me-2"></i>NOTES: @order.Notes
+                                    </div>
+                                }
+                            </div>
+                            <div class="col-lg-4 text-center">
+                                <div class="mb-3">
+                                    <h3 class="fw-bold">TOTAL: @order.TotalPrice.ToString("C")</h3>
+                                    <small class="text-muted">Incl. @order.DeliveryFee.ToString("C") delivery fee</small>
+                                </div>
+                                @if (order.Status == OrderStatus.Ready)
+                                {
+                                    <form asp-action="PickUp" method="post" class="m-0">
+                                        <input type="hidden" name="id" value="@order.ID" />
+                                        <button type="submit" class="btn btn-success btn-lg w-100 py-4 fs-2 fw-bold shadow">
+                                            <i class="fas fa-box-open me-2"></i>PICK UP
+                                        </button>
+                                    </form>
+                                }
+                                else if (order.Status == OrderStatus.OutForDelivery)
+                                {
+                                    <form asp-action="MarkDelivered" method="post" class="m-0">
+                                        <input type="hidden" name="id" value="@order.ID" />
+                                        <button type="submit" class="btn btn-primary btn-lg w-100 py-4 fs-2 fw-bold shadow">
+                                            <i class="fas fa-check-circle me-2"></i>MARK DELIVERED
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5 mt-5">
+                <div class="mb-4">
+                    <i class="fas fa-clipboard-check fa-10x text-light"></i>
+                </div>
+                <h2 class="text-muted">No orders waiting for delivery</h2>
+                <p class="fs-4 text-muted">New ready orders will appear here automatically.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/orderHub")
+            .build();
+
+        connection.on("OrderStatusUpdated", function (orderId, status) {
+            console.log("Order " + orderId + " updated to " + status);
+            location.reload();
+        });
+
+        connection.on("NewOrderReceived", function (orderId) {
+            // New orders might become ready soon, but we usually wait for StatusUpdate to 'Ready'
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+    </script>
+}
+
+<style>
+    .delivery-dashboard {
+        background-color: #f0f2f5;
+        min-height: calc(100vh - 100px);
+    }
+    .card {
+        border-radius: 15px;
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .btn-lg {
+        border-radius: 10px;
+    }
+</style>

@@ -1,0 +1,341 @@
+@model RMS.Web.Models.Order
+@using RMS.Web.Models
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to List
+        </a>
+        <a asp-action="Receipt" asp-route-id="@Model.ID" target="_blank" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-print me-1"></i> Print Receipt
+        </a>
+    </div>
+    
+    <!-- Visual Progress Stepper -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body py-4">
+            <div class="position-relative">
+                <div class="progress" style="height: 4px;">
+                    @{
+                        int progress = Model.Status switch {
+                            OrderStatus.Pending => 10,
+                            OrderStatus.Confirmed => 25,
+                            OrderStatus.Preparing => 50,
+                            OrderStatus.Ready or OrderStatus.ReadyForPickup => 75,
+                            OrderStatus.OutForDelivery or OrderStatus.Delivered or OrderStatus.PickedUp => 100,
+                            _ => 0
+                        };
+                        var progressColor = Model.Status == OrderStatus.Cancelled ? "bg-danger" : "bg-primary";
+                    }
+                    <div class="progress-bar @progressColor" role="progressbar" style="width: @progress%;"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-3 text-center small fw-bold">
+                    <div class="@(Model.Status >= OrderStatus.Pending ? "text-primary" : "text-muted")">
+                        <div class="mb-1"><i class="fas fa-file-invoice"></i></div>
+                        PENDING
+                    </div>
+                    <div class="@(Model.Status >= OrderStatus.Confirmed ? "text-primary" : "text-muted")">
+                        <div class="mb-1"><i class="fas fa-check-circle"></i></div>
+                        CONFIRMED
+                    </div>
+                    <div class="@(Model.Status >= OrderStatus.Preparing ? "text-primary" : "text-muted")">
+                        <div class="mb-1"><i class="fas fa-fire"></i></div>
+                        PREPARING
+                    </div>
+                    <div class="@(Model.Status >= OrderStatus.Ready || Model.Status == OrderStatus.ReadyForPickup ? "text-primary" : "text-muted")">
+                        <div class="mb-1"><i class="fas fa-box"></i></div>
+                        READY
+                    </div>
+                    <div class="@(Model.Status >= OrderStatus.OutForDelivery || Model.Status == OrderStatus.Delivered || Model.Status == OrderStatus.PickedUp ? "text-primary" : "text-muted")">
+                        <div class="mb-1"><i class="fas fa-home"></i></div>
+                        COMPLETED
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0 text-gray-800">Order #@Model.ID</h1>
+        <div>
+            @{
+                var statusClass = Model.Status switch
+                {
+                    OrderStatus.Pending => "warning",
+                    OrderStatus.Confirmed => "info",
+                    OrderStatus.Preparing => "primary",
+                    OrderStatus.Ready or OrderStatus.ReadyForPickup => "success",
+                    OrderStatus.OutForDelivery => "info",
+                    OrderStatus.Delivered or OrderStatus.PickedUp => "success",
+                    OrderStatus.Cancelled => "danger",
+                    _ => "secondary"
+                };
+            }
+            <span class="badge bg-@statusClass fs-6">@Model.Status</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Order Items -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Order Items</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@item.MenuItem.Name</div>
+                                        @if (!string.IsNullOrEmpty(item.Notes))
+                                        {
+                                            <small class="text-muted">Note: @item.Notes</small>
+                                        }
+                                    </td>
+                                    <td>@item.Quantity</td>
+                                    <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                                    <td class="text-end">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Subtotal</th>
+                                <td class="text-end">@Model.TotalPrice.ToString("C")</td>
+                            </tr>
+                            @if (Model.DeliveryFee > 0)
+                            {
+                                <tr>
+                                    <th colspan="3" class="text-end">Delivery Fee</th>
+                                    <td class="text-end">@Model.DeliveryFee.ToString("C")</td>
+                                </tr>
+                            }
+                            <tr class="table-light">
+                                <th colspan="3" class="text-end fs-5">Total</th>
+                                <td class="text-end fs-5 fw-bold text-primary">@((Model.TotalPrice + Model.DeliveryFee).ToString("C"))</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <strong>Order Notes:</strong>
+                        <p class="mb-0">@Model.Notes</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Customer & Branch Info -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Customer Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Name:</strong> @Model.Customer.Name</p>
+                        <p><strong>Phone:</strong> @Model.Customer.Phone</p>
+                        @if (Model.OrderType == OrderType.Delivery && Model.DeliveryAddress != null)
+                        {
+                            <hr>
+                            <p><strong>Delivery Address:</strong></p>
+                            <p class="mb-0">@Model.DeliveryAddress.AddressLine</p>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Branch Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Branch:</strong> @Model.Branch.Name</p>
+                        <p><strong>Created At:</strong> @Model.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</p>
+                        <p><strong>Created By:</strong> @(Model.CreatedByUser?.UserName ?? "System")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Status Management -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Status == OrderStatus.Pending || Model.Status == OrderStatus.Confirmed)
+                {
+                    <a asp-action="EditItems" asp-route-id="@Model.ID" class="btn btn-outline-primary mb-3 w-100">
+                        <i class="fas fa-edit me-1"></i> Edit Items
+                    </a>
+                }
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="id" value="@Model.ID" />
+                    <div class="mb-3">
+                        <label class="form-label">Update Status</label>
+                        <select name="status" class="form-select mb-3">
+                            @foreach (OrderStatus status in Enum.GetValues(typeof(OrderStatus)))
+                            {
+                                <option value="@status" selected="@(status == Model.Status ? "selected" : null)">@status</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                    </div>
+                </form>
+
+                <hr>
+
+                <div class="mb-3">
+                    <label class="form-label">Change Order Type</label>
+                    <form asp-action="ChangeType" method="post">
+                        <input type="hidden" name="id" value="@Model.ID" />
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <select name="newType" class="form-select" id="orderTypeSelect">
+                                    @foreach (OrderType type in Enum.GetValues(typeof(OrderType)))
+                                    {
+                                        <option value="@type" selected="@(type == Model.OrderType ? "selected" : null)">@type</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <button type="submit" class="btn btn-outline-secondary w-100">Change</button>
+                            </div>
+                        </div>
+
+                        <div id="addressSelection" class="mt-2" style="display: @(Model.OrderType == OrderType.Pickup ? "none" : "block")">
+                            <label class="small text-muted">Select Delivery Address</label>
+                            <select name="deliveryAddressId" class="form-select form-select-sm">
+                                @if (Model.Customer.Addresses != null)
+                                {
+                                    @foreach (var addr in Model.Customer.Addresses)
+                                    {
+                                        <option value="@addr.ID" selected="@(addr.ID == Model.DeliveryAddressId ? "selected" : null)">@addr.AddressLine (@addr.Zone)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                    @if (Model.Status != OrderStatus.Cancelled && Model.Status != OrderStatus.Delivered && Model.Status != OrderStatus.PickedUp)
+                    {
+                        <form asp-action="UpdateStatus" method="post">
+                            <input type="hidden" name="id" value="@Model.ID" />
+                            <input type="hidden" name="status" value="@OrderStatus.Cancelled" />
+                            <button type="submit" class="btn btn-outline-danger w-100">Cancel Order</button>
+                        </form>
+                    }
+                    <a asp-action="Receipt" asp-route-id="@Model.ID" target="_blank" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-print me-1"></i> Print Receipt
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.OrderType == OrderType.Delivery)
+        {
+            <!-- Delivery Assignment -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Delivery Assignment</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.DeliveryUser != null)
+                    {
+                        <div class="alert alert-info border-0 mb-3">
+                            <i class="fas fa-user-check me-2"></i>
+                            Assigned to: <strong>@Model.DeliveryUser.FullName</strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning border-0 mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No delivery agent assigned.
+                        </div>
+                    }
+
+                    <form asp-action="AssignDelivery" method="post">
+                        <input type="hidden" name="id" value="@Model.ID" />
+                        <div class="mb-3">
+                            <label class="form-label">Assign Agent</label>
+                            <select name="deliveryUserId" class="form-select mb-3">
+                                <option value="">-- Select Agent --</option>
+                                @foreach (var agent in ViewBag.DeliveryAgents as IList<ApplicationUser> ?? new List<ApplicationUser>())
+                                {
+                                    <option value="@agent.Id" selected="@(agent.Id == Model.DeliveryUserId ? "selected" : null)">@agent.FullName</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary w-100">Update Assignment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Timeline -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Timeline (Audit History)</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush small">
+                    @{
+                        var timeline = ViewBag.Timeline as List<AuditLog>;
+                    }
+                    @if (timeline != null && timeline.Any())
+                    {
+                        foreach (var log in timeline)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 text-primary">@log.Action</h6>
+                                    <small>@log.Timestamp.ToLocalTime().ToString("HH:mm")</small>
+                                </div>
+                                @if (log.Action == "Update")
+                                {
+                                    <p class="mb-1 text-muted">Status changed by staff</p>
+                                }
+                                else if (log.Action == "Create")
+                                {
+                                    <p class="mb-1 text-muted">Order created in system</p>
+                                }
+                                <small class="text-muted">@log.Timestamp.ToLocalTime().ToString("MMM dd, yyyy")</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="list-group-item">
+                            <p class="mb-0 text-muted">No history found.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

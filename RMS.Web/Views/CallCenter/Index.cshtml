@@ -1,0 +1,602 @@
+@{
+    ViewData["Title"] = "Call Center - New Order";
+}
+
+<div class="row">
+    <!-- Left Column: Customer & Order Type -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-tag me-1"></i> Customer Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <input type="text" id="customerPhone" class="form-control" placeholder="Phone Number..." />
+                    <button class="btn btn-primary" type="button" id="btnSearchCustomer">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                
+                <div id="customerDetails" style="display: none;">
+                    <div class="mb-3 p-3 bg-light rounded position-relative">
+                        <div id="custTags" class="position-absolute top-0 end-0 mt-2 me-2"></div>
+                        <h6 id="custName" class="fw-bold mb-1"></h6>
+                        <p id="custPhone" class="small text-muted mb-0"></p>
+                    </div>
+
+                    <div id="customerHistory" class="mb-3">
+                        <label class="form-label small fw-bold text-muted uppercase">Recent Orders</label>
+                        <div id="custHistory" class="small border rounded p-2 bg-white overflow-auto" style="max-height: 200px;">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted uppercase">Order Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="orderType" id="typePickup" value="1" checked>
+                            <label class="btn btn-outline-primary" for="typePickup"><i class="fas fa-walking me-1"></i> Pickup</label>
+                            
+                            <input type="radio" class="btn-check" name="orderType" id="typeDelivery" value="0">
+                            <label class="btn btn-outline-primary" for="typeDelivery"><i class="fas fa-truck me-1"></i> Delivery</label>
+                        </div>
+                    </div>
+
+                    <div id="addressSection" class="mb-3" style="display: none;">
+                        <label class="form-label small fw-bold text-muted uppercase">Delivery Address</label>
+                        <select id="deliveryAddressId" class="form-select">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted uppercase">Assign Branch</label>
+                        <select id="branchId" class="form-select">
+                            @foreach (var branch in ViewBag.Branches)
+                            {
+                                <option value="@branch.ID">@branch.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div id="noCustomer" class="alert alert-warning small" style="display: none;">
+                    Customer not found. <a href="#" class="fw-bold">Register New?</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-shopping-cart me-1"></i> Current Order</h6>
+            </div>
+            <div class="card-body p-0">
+                <div id="cartItems" class="list-group list-group-flush" style="min-height: 100px;">
+                    <!-- Items will appear here -->
+                    <div class="text-center p-4 text-muted small" id="emptyCartMsg">
+                        No items added yet.
+                    </div>
+                </div>
+                <div class="p-3 bg-light border-top">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Subtotal:</span>
+                        <span id="subtotalDisplay">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" id="deliveryFeeRow" style="display: none !important;">
+                        <span>Delivery Fee:</span>
+                        <span id="deliveryFeeDisplay">$@ViewBag.DeliveryFee</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 text-danger">
+                        <span>Discount:</span>
+                        <div class="input-group input-group-sm w-50">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="discountAmount" class="form-control" value="0.00" step="0.50" min="0" onchange="updateTotals()" onkeyup="updateTotals()" />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold text-primary fs-5 mt-2">
+                        <span>Total:</span>
+                        <span id="totalDisplay">$0.00</span>
+                    </div>
+                </div>
+                <div class="p-3">
+                    <textarea id="orderNotes" class="form-control mb-3" placeholder="Order notes (allergies, gate code, etc.)..." rows="2"></textarea>
+                    <button id="btnPlaceOrder" class="btn btn-success w-100 py-2 fw-bold" disabled>
+                        PLACE ORDER
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Menu Items -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Menu Selection</h6>
+                <div class="input-group input-group-sm w-50">
+                    <input type="text" id="menuSearch" class="form-control" placeholder="Search menu..." />
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-pills mb-4" id="categoryTabs" role="tablist">
+                    @for (int i = 0; i < ViewBag.Categories.Count; i++)
+                    {
+                        var category = ViewBag.Categories[i];
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(i == 0 ? "active" : "")" 
+                                    id="tab-@category.ID" data-bs-toggle="pill" 
+                                    data-bs-target="#cat-@category.ID" type="button" role="tab">
+                                @category.Name
+                            </button>
+                        </li>
+                    }
+                </ul>
+                <div class="tab-content" id="menuContent">
+                    @for (int i = 0; i < ViewBag.Categories.Count; i++)
+                    {
+                        var category = ViewBag.Categories[i];
+                        <div class="tab-pane fade @(i == 0 ? "show active" : "")" 
+                             id="cat-@category.ID" role="tabpanel">
+                            <div class="row row-cols-1 row-cols-md-3 g-3">
+                                @foreach (var item in category.MenuItems)
+                                {
+                                    <div class="col menuItemCard" data-name="@item.Name.ToLower()">
+                                        <div class="card h-100 border-0 bg-light">
+                                            <div class="card-body d-flex flex-column">
+                                                <h6 class="fw-bold mb-1">@item.Name</h6>
+                                                <p class="small text-muted mb-2 text-truncate">@item.Description</p>
+                                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                                    <span class="fw-bold text-primary">@item.Price.ToString("C")</span>
+                                                    <button class="btn btn-sm btn-primary btn-add-item" 
+                                                            data-id="@item.ID" 
+                                                            data-name="@item.Name" 
+                                                            data-price="@item.Price"
+                                                            data-has-options="@(item.Extras.Any() || item.Variants.Any() ? "true" : "false")">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .variant-option:hover, .extra-option:hover {
+        background-color: #f8f9fa;
+        border-color: #0d6efd !important;
+    }
+    .variant-option input:checked + label, .extra-option input:checked + label {
+        color: #0d6efd;
+    }
+    .uppercase {
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<!-- Modification Modal -->
+<div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalItemName">Item Name</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalItemBody">
+                <!-- Content populated via JS -->
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="w-100 d-flex justify-content-between align-items-center">
+                    <div class="fw-bold text-primary fs-5">Total: <span id="modalTotalPrice">$0.00</span></div>
+                    <button type="button" class="btn btn-primary px-4 fw-bold" id="btnConfirmAdd">ADD TO CART</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let cart = [];
+        let currentCustomer = null;
+        let menuItems = @Html.Raw(Json.Serialize(((IEnumerable<dynamic>)ViewBag.Categories).SelectMany(c => (IEnumerable<dynamic>)c.MenuItems).Select(m => new {
+            id = m.ID,
+            name = m.Name,
+            price = m.Price,
+            description = m.Description,
+            extras = ((IEnumerable<dynamic>)m.Extras).Select(e => new { id = e.ID, name = e.Name, price = e.Price }),
+            variants = ((IEnumerable<dynamic>)m.Variants).Select(v => new { id = v.ID, name = v.Name, price = v.Price })
+        })));
+        let currentEditingItem = null;
+
+        $(document).ready(function() {
+            // Search Customer
+            $('#btnSearchCustomer').click(function() {
+                const phone = $('#customerPhone').val();
+                if (!phone) return;
+
+                $.get('/CallCenter/SearchCustomer', { phone: phone })
+                    .done(function(data) {
+                        currentCustomer = data;
+                        $('#custName').text(data.name);
+                        $('#custPhone').text(data.phone);
+                        
+                        // Display Tags
+                        const tagsDiv = $('#custTags');
+                        tagsDiv.empty();
+                        if (data.tags) {
+                            const tags = data.tags.split(',');
+                            tags.forEach(tag => {
+                                let badgeClass = 'bg-secondary';
+                                if (tag.toLowerCase().includes('vip')) badgeClass = 'bg-success';
+                                if (tag.toLowerCase().includes('risk')) badgeClass = 'bg-danger';
+                                tagsDiv.append(`<span class="badge ${badgeClass} ms-1">${tag.trim()}</span>`);
+                            });
+                        }
+                        const addrSelect = $('#deliveryAddressId');
+                        addrSelect.empty();
+                        if (data.addresses && data.addresses.length > 0) {
+                            data.addresses.forEach(addr => {
+                                addrSelect.append(`<option value="${addr.id}">${addr.addressLine}</option>`);
+                            });
+                            // Automatically fetch eligible branch for the first address
+                            fetchEligibleBranch(data.addresses[0].id);
+                        } else {
+                            addrSelect.append('<option value="">No addresses found</option>');
+                        }
+
+                        // Load History
+                        loadCustomerHistory(data.id);
+
+                        $('#customerDetails').show();
+                        $('#noCustomer').hide();
+                        validateOrder();
+                    })
+                    .fail(function() {
+                        currentCustomer = null;
+                        $('#customerDetails').hide();
+                        $('#noCustomer').show();
+                        validateOrder();
+                    });
+            });
+
+            // Handle Address Change
+            $('#deliveryAddressId').change(function() {
+                const addressId = $(this).val();
+                if (addressId) {
+                    fetchEligibleBranch(addressId);
+                }
+            });
+
+        function fetchEligibleBranch(addressId) {
+            $.get('/CallCenter/GetEligibleBranch', { addressId: addressId })
+                .done(function(data) {
+                    $('#branchId').val(data.id);
+                })
+                .fail(function(err) {
+                    const msg = err.responseText || 'No open branch found for this zone.';
+                    alert('Branch Warning: ' + msg);
+                });
+        }
+
+        function loadCustomerHistory(customerId) {
+            $.get('/CallCenter/GetCustomerHistory', { customerId: customerId })
+                .done(function(data) {
+                    const historyDiv = $('#custHistory');
+                    historyDiv.empty();
+                    if (data && data.length > 0) {
+                        data.forEach(order => {
+                            const date = new Date(order.createdAt).toLocaleDateString();
+                            const itemNames = order.items.map(i => i.name).join(', ');
+                            historyDiv.append(`
+                                <div class="mb-2 p-2 border-bottom">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold">Order #${order.id}</span>
+                                        <span>${date}</span>
+                                    </div>
+                                    <div class="text-truncate">${itemNames}</div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span class="text-primary fw-bold">$${order.totalPrice.toFixed(2)}</span>
+                                        <button class="btn btn-sm btn-outline-info py-0" style="font-size: 0.7rem;" onclick="suggestOrder(${order.id})">
+                                            Re-Order Items
+                                        </button>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        historyDiv.text('No previous orders found.');
+                    }
+                });
+        }
+
+        function suggestOrder(orderId) {
+            $.get('/CallCenter/GetOrderItems', { orderId: orderId })
+                .done(function(items) {
+                    cart = [];
+                    items.forEach(item => {
+                        cart.push({
+                            menuItemId: item.menuItemId,
+                            name: item.name,
+                            price: item.price,
+                            quantity: item.quantity,
+                            notes: item.notes || ''
+                        });
+                    });
+                    renderCart();
+                })
+                .fail(function() {
+                    alert('Error fetching order items.');
+                });
+        }
+
+            // Toggle Delivery Address
+            $('input[name="orderType"]').change(function() {
+                if ($(this).val() == "0") { // Delivery
+                    $('#addressSection').show();
+                    $('#deliveryFeeRow').show().css('display', 'flex');
+                } else {
+                    $('#addressSection').hide();
+                    $('#deliveryFeeRow').hide().attr('style', 'display: none !important');
+                }
+                updateTotals();
+            });
+
+            // Add Item to Cart
+            $('.btn-add-item').click(function() {
+                const id = $(this).data('id');
+                const hasOptions = $(this).data('has-options') === true;
+
+                if (hasOptions) {
+                    openItemModal(id);
+                } else {
+                    const name = $(this).data('name');
+                    const price = parseFloat($(this).data('price'));
+                    addToCart(id, name, price, '', []);
+                }
+            });
+
+            $('#btnConfirmAdd').click(function() {
+                if (!currentEditingItem) return;
+
+                const selectedVariantId = $('input[name="variant"]:checked').val();
+                const selectedExtras = [];
+                $('input[name="extra"]:checked').each(function() {
+                    selectedExtras.push(parseInt($(this).val()));
+                });
+
+                const variant = currentEditingItem.variants.find(v => v.id == selectedVariantId);
+                const extras = currentEditingItem.extras.filter(e => selectedExtras.includes(e.id));
+                const itemNote = $('#modalItemNotes').val();
+
+                let finalName = currentEditingItem.name;
+                let finalPrice = currentEditingItem.price;
+                let modNotes = [];
+
+                if (variant) {
+                    finalPrice = variant.price;
+                    modNotes.push(`Variant: ${variant.name}`);
+                }
+
+                if (extras.length > 0) {
+                    extras.forEach(e => {
+                        finalPrice += e.price;
+                        modNotes.push(`Extra: ${e.name}`);
+                    });
+                }
+
+                if (itemNote) {
+                    modNotes.push(`Note: ${itemNote}`);
+                }
+
+                addToCart(currentEditingItem.id, finalName, finalPrice, modNotes.join(', '), extras.map(e => e.id), variant?.id);
+                $('#itemModal').modal('hide');
+            });
+
+            // Menu Search
+            $('#menuSearch').on('keyup', function() {
+                const val = $(this).val().toLowerCase();
+                $('.menuItemCard').each(function() {
+                    $(this).toggle($(this).data('name').includes(val));
+                });
+            });
+
+            // Place Order
+            $('#btnPlaceOrder').click(function() {
+                if (!currentCustomer || cart.length === 0) return;
+
+                const orderData = {
+                    customerId: currentCustomer.id,
+                    branchId: parseInt($('#branchId').val()),
+                    orderType: parseInt($('input[name="orderType"]:checked').val()),
+                    deliveryAddressId: $('input[name="orderType"]:checked').val() == "0" ? (parseInt($('#deliveryAddressId').val()) || null) : null,
+                    notes: $('#orderNotes').val(),
+                    discountAmount: parseFloat($('#discountAmount').val()) || 0,
+                    items: cart
+                };
+
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> PLACING...');
+
+                $.ajax({
+                    url: '/CallCenter/CreateOrder',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(orderData),
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Order #' + response.orderId + ' placed successfully!');
+                            window.location.href = '/Orders/Details/' + response.orderId;
+                        }
+                    },
+                    error: function(err) {
+                        const msg = err.responseText || 'Error placing order. Please try again.';
+                        alert('Order Refused: ' + msg);
+                        $('#btnPlaceOrder').prop('disabled', false).text('PLACE ORDER');
+                    }
+                });
+            });
+        });
+
+        function openItemModal(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            currentEditingItem = item;
+            $('#modalItemName').text(item.name);
+            
+            let html = '';
+            
+            // Variants
+            if (item.variants && item.variants.length > 0) {
+                html += '<div class="mb-4"><label class="form-label fw-bold text-muted small uppercase">Select Variant</label>';
+                item.variants.forEach((v, idx) => {
+                    html += `
+                        <div class="form-check border rounded p-3 mb-2 variant-option" style="cursor: pointer;">
+                            <input class="form-check-input" type="radio" name="variant" id="v-${v.id}" value="${v.id}" ${idx === 0 ? 'checked' : ''} onchange="updateModalPrice()">
+                            <label class="form-check-label d-flex justify-content-between w-100" for="v-${v.id}">
+                                <span>${v.name}</span>
+                                <span class="fw-bold">$${v.price.toFixed(2)}</span>
+                            </label>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Extras
+            if (item.extras && item.extras.length > 0) {
+                html += '<div class="mb-4"><label class="form-label fw-bold text-muted small uppercase">Extras</label>';
+                item.extras.forEach(e => {
+                    html += `
+                        <div class="form-check border rounded p-3 mb-2 extra-option" style="cursor: pointer;">
+                            <input class="form-check-input" type="checkbox" name="extra" id="e-${e.id}" value="${e.id}" onchange="updateModalPrice()">
+                            <label class="form-check-label d-flex justify-content-between w-100" for="e-${e.id}">
+                                <span>${e.name}</span>
+                                <span class="text-success small">+ $${e.price.toFixed(2)}</span>
+                            </label>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Item Note
+            html += `
+                <div class="mb-2">
+                    <label class="form-label fw-bold text-muted small uppercase">Special Instructions</label>
+                    <textarea id="modalItemNotes" class="form-control" rows="2" placeholder="E.g. No onions, extra spicy..."></textarea>
+                </div>
+            `;
+
+            $('#modalItemBody').html(html);
+            updateModalPrice();
+            $('#itemModal').modal('show');
+        }
+
+        function updateModalPrice() {
+            if (!currentEditingItem) return;
+
+            let total = currentEditingItem.price;
+            
+            // If variant selected, it replaces base price
+            const selectedVariantId = $('input[name="variant"]:checked').val();
+            if (selectedVariantId) {
+                const variant = currentEditingItem.variants.find(v => v.id == selectedVariantId);
+                if (variant) total = variant.price;
+            }
+
+            // Extras add to the price
+            $('input[name="extra"]:checked').each(function() {
+                const extraId = $(this).val();
+                const extra = currentEditingItem.extras.find(e => e.id == extraId);
+                if (extra) total += extra.price;
+            });
+
+            $('#modalTotalPrice').text('$' + total.toFixed(2));
+        }
+
+        function addToCart(id, name, price, notes, extraIds, variantId) {
+            // Check if exact same item with same mods exists
+            const existing = cart.find(i => 
+                i.menuItemId === id && 
+                i.notes === notes && 
+                i.price === price
+            );
+
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({
+                    menuItemId: id,
+                    name: name,
+                    price: price,
+                    quantity: 1,
+                    notes: notes
+                });
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = $('#cartItems');
+            $('#emptyCartMsg').toggle(cart.length === 0);
+            
+            // Remove existing items (except empty message)
+            container.find('.cart-item').remove();
+
+            cart.forEach((item, index) => {
+                let noteHtml = item.notes ? `<div class="text-info mt-1" style="font-size: 0.7rem;"><i class="fas fa-info-circle me-1"></i>${item.notes}</div>` : '';
+                container.append(`
+                    <div class="list-group-item cart-item px-3 py-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold small">${item.name}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                                ${noteHtml}
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold me-2">$${(item.price * item.quantity).toFixed(2)}</span>
+                                <button class="btn btn-sm text-danger p-0" onclick="removeFromCart(${index})">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+
+            updateTotals();
+            validateOrder();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function updateTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const isDelivery = $('input[name="orderType"]:checked').val() == "0";
+            const deliveryFee = isDelivery ? parseFloat('@ViewBag.DeliveryFee') : 0;
+            const discount = parseFloat($('#discountAmount').val()) || 0;
+            const total = subtotal + deliveryFee - discount;
+
+            $('#subtotalDisplay').text('$' + subtotal.toFixed(2));
+            $('#totalDisplay').text('$' + total.toFixed(2));
+        }
+
+        function validateOrder() {
+            const isValid = currentCustomer && cart.length > 0;
+            $('#btnPlaceOrder').prop('disabled', !isValid);
+        }
+    </script>
+}

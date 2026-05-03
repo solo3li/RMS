@@ -1,0 +1,205 @@
+:root {
+    --sidebar-width: 260px;
+    --primary-color: #4e73df;
+    --secondary-color: #858796;
+    --success-color: #1cc88a;
+    --info-color: #36b9cc;
+    --warning-color: #f6c23e;
+    --danger-color: #e74a3b;
+    --light-color: #f8f9fc;
+    --dark-color: #5a5c69;
+    --bg-color: #f4f7f9;
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #4e5d78;
+    --sidebar-hover-bg: #f0f3f9;
+    --sidebar-active-color: #4e73df;
+    --card-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #4e5d78;
+    overflow-x: hidden;
+    margin-bottom: 0 !important;
+}
+
+/* Sidebar Styling */
+#wrapper {
+    display: flex;
+    width: 100%;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    border-right: 1px solid #e3e6f0;
+    transition: margin 0.25s ease-out;
+    position: fixed;
+    z-index: 1000;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 1.5rem 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    display: flex;
+    align-items: center;
+}
+
+#sidebar-wrapper .sidebar-heading i {
+    margin-right: 0.75rem;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--sidebar-text);
+    background-color: transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.list-group-item i {
+    width: 1.5rem;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    text-align: center;
+    color: #b7c0cd;
+}
+
+.list-group-item:hover {
+    background-color: var(--sidebar-hover-bg);
+    color: var(--sidebar-active-color);
+}
+
+.list-group-item:hover i {
+    color: var(--sidebar-active-color);
+}
+
+.list-group-item.active {
+    background-color: var(--sidebar-hover-bg);
+    color: var(--sidebar-active-color);
+    border-right: 4px solid var(--sidebar-active-color);
+}
+
+.list-group-item.active i {
+    color: var(--sidebar-active-color);
+}
+
+/* Page Content Styling */
+#page-content-wrapper {
+    width: 100%;
+    padding-left: var(--sidebar-width);
+    transition: all 0.25s ease-out;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: -var(--sidebar-width);
+}
+
+#wrapper.toggled #page-content-wrapper {
+    padding-left: 0;
+}
+
+.main-content {
+    padding: 2rem;
+    min-height: calc(100vh - 70px - 60px); /* 100vh - top navbar - footer */
+}
+
+/* Dashboard Cards */
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #f2f4f6;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.stat-card {
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.bg-soft-primary { background-color: #e8f0fe; color: #4e73df; }
+.bg-soft-success { background-color: #e6f9f1; color: #1cc88a; }
+.bg-soft-info { background-color: #e7f7f9; color: #36b9cc; }
+.bg-soft-warning { background-color: #fff9e6; color: #f6c23e; }
+
+/* Top Navbar */
+.top-navbar {
+    background-color: #fff;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: -var(--sidebar-width);
+    }
+    #page-content-wrapper {
+        padding-left: 0;
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: 0;
+    }
+}
+
+/* Print Styling for Receipts */
+@media print {
+    #sidebar-wrapper, .top-navbar, .btn, .card-header, .timeline-card, .footer, .no-print {
+        display: none !important;
+    }
+    #page-content-wrapper {
+        padding-left: 0 !important;
+        margin: 0 !important;
+    }
+    .main-content {
+        padding: 0 !important;
+    }
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #eee !important;
+    }
+    .container-fluid {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
