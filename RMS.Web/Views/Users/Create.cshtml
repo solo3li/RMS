@@ -51,16 +51,40 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Roles</label>
-                            <select asp-for="SelectedRoles" class="form-select" asp-items="Model.RoleList" multiple size="5">
-                            </select>
-                            <div class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple roles.</div>
+                            <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                                @if (Model.RoleList != null)
+                                {
+                                    foreach (var role in Model.RoleList)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" name="SelectedRoles" value="@role.Value" id="role_@role.Value" @(role.Selected ? "checked" : "")>
+                                            <label class="form-check-label" for="role_@role.Value">
+                                                @role.Text
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            <div class="form-text text-muted">Select one or more roles for this user.</div>
                             <span asp-validation-for="SelectedRoles" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Assigned Branches</label>
-                            <select asp-for="SelectedBranches" class="form-select" asp-items="Model.BranchList" multiple size="5">
-                            </select>
+                            <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                                @if (Model.BranchList != null)
+                                {
+                                    foreach (var branch in Model.BranchList)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" name="SelectedBranches" value="@branch.Value" id="branch_@branch.Value" @(branch.Selected ? "checked" : "")>
+                                            <label class="form-check-label" for="branch_@branch.Value">
+                                                @branch.Text
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                            </div>
                             <div class="form-text text-muted">Select branches this user can manage or work in.</div>
                         </div>
 
