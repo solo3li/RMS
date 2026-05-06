@@ -8,7 +8,7 @@ namespace RMS.Web.Data
 {
     public static class DbInitializer
     {
-        public static async Task Initialize(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public static async Task Initialize(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
         {
             await context.Database.MigrateAsync();
 
@@ -89,25 +89,28 @@ namespace RMS.Web.Data
             var downtownBranch = await context.Branches.FirstAsync(b => b.Name == "Downtown Express");
 
             // 3. Seed Users
-            async Task CreateUser(string email, string name, string role, Branch? branch = null)
+            async Task CreateUser(string email, string name, string role, Branch? branch = null, string? password = null)
             {
                 if (await userManager.FindByEmailAsync(email) == null)
                 {
                     var user = new ApplicationUser { UserName = email, Email = email, FullName = name, IsActive = true, CreatedAt = DateTime.UtcNow };
                     if (branch != null) user.AssignedBranches.Add(branch);
-                    var result = await userManager.CreateAsync(user, "Pass@123");
+                    var result = await userManager.CreateAsync(user, password ?? "Pass@123");
                     if (result.Succeeded) await userManager.AddToRoleAsync(user, role);
                 }
             }
 
-            await CreateUser("admin@rms.com", "System Admin", "Admin");
+            var adminEmail = configuration["Admin:Email"] ?? "admin@rms.com";
+            var adminPassword = configuration["Admin:Password"] ?? "Admin@123";
+
+            await CreateUser(adminEmail, "System Admin", "Admin", null, adminPassword);
             await CreateUser("manager.main@rms.com", "Main Manager", "Branch Manager", mainBranch);
             await CreateUser("kitchen.main@rms.com", "Main Chef", "Kitchen", mainBranch);
             await CreateUser("delivery.main@rms.com", "Main Rider", "Delivery", mainBranch);
             await CreateUser("callcenter@rms.com", "Agent Smith", "Call Center");
             await CreateUser("kitchen.downtown@rms.com", "Downtown Cook", "Kitchen", downtownBranch);
 
-            var adminUser = await userManager.FindByEmailAsync("admin@rms.com");
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
             // 4. Seed Categories and Menu Items
             if (!context.Categories.Any())

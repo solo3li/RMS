@@ -25,6 +25,8 @@ EXPOSE 8080
 # Environment variables
 ENV ASPNETCORE_HTTP_PORTS=8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV Admin__Email=admin@rms.com
+ENV Admin__Password=Admin@123
 
 # Copy the published output from the publish stage
 COPY --from=publish /app/publish .
